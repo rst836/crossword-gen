@@ -1,3 +1,5 @@
+import copy, random
+
 grid = [[]]
 words = []
 comp_grid = []
@@ -57,7 +59,7 @@ def place_words(first, vert, pos):
             count.append(comp_grid[inter][inter])
         inter += 1
     if len(count) == 0:
-        return    
+        return
     elif len(count) == 1:
         placed = False
         test = find_int(key, count[0])
@@ -115,7 +117,7 @@ def test_placement(test, vert, pos, word):
         testc = test_collision(pos, test, word, vert)
         if not testc:
             return (False, pos)
-        for i in range(pos[0] - test[1], pos[0] - test[1] + len(word)):    
+        for i in range(pos[0] - test[1], pos[0] - test[1] + len(word)):
             grid[i][pos[1] + test[0]] = word[i - (pos[0] - test[1])]
             if i - (pos[0] - test[1]) == 0:
                 newPos = tuple([i, pos[1] + test[0]])
@@ -130,7 +132,7 @@ def test_placement(test, vert, pos, word):
         testc = test_collision(pos, test, word, vert)
         if not testc:
             return (False, pos)
-        for i in range(pos[1] - test[1], pos[1] - test[1] + len(word)):    
+        for i in range(pos[1] - test[1], pos[1] - test[1] + len(word)):
             grid[pos[0] + test[0]][i] = word[i - (pos[1] - test[1])]
             if i - (pos[1] - test[1]) == 0:
                 newPos = tuple([pos[0] + test[0], i])
@@ -204,25 +206,52 @@ def clearCol():
     global grid
     for i in range(len(grid)):
         grid[i].pop(0)
-    
+
 def clearColEnd():
     global grid
     for i in range(len(grid)):
         grid[i].pop(-1)
 
-def main():
+def do_calculation(input):
     global words
     global comp_grid
     global grid
     global starts
-    words = ['Heller', 'Fitzgerald', 'Williams', 'London', 'Miller', 'Hemingway', 'Orwell', 'Kesey', 'Steinbeck']
+    words = input
     for i in range(len(words)):
         words[i] = words[i].lower()
+    ref_words = copy.deepcopy(words)
+    ref_comp_grid = copy.deepcopy(comp_grid)
+    ref_grid = copy.deepcopy(grid)
+    ref_starts = copy.deepcopy(starts)
+    best_words = copy.deepcopy(ref_words)
+    best_comp_grid = copy.deepcopy(ref_comp_grid)
+    best_grid = copy.deepcopy(ref_grid)
+    best_starts = copy.deepcopy(ref_starts)
+    min_val = len(ref_words)
     words.sort()
     words.sort(key = leng)
     words.reverse()
-    comp_grid = find_comps()
-    create_grid()
+    for i in range(20):
+        comp_grid = find_comps()
+        create_grid()
+        if len(words) < min_val:
+            best_words = copy.deepcopy(words)
+            best_comp_grid = copy.deepcopy(comp_grid)
+            best_grid = copy.deepcopy(grid)
+            best_starts = copy.deepcopy(starts)
+            min_val = len(best_words)
+        if min_val == 0:
+            break
+        comp_grid = copy.deepcopy(ref_comp_grid)
+        grid = copy.deepcopy(ref_grid)
+        starts = copy.deepcopy(ref_starts)
+        words = copy.deepcopy(ref_words)
+        random.shuffle(words)
+    comp_grid = copy.deepcopy(best_comp_grid)
+    grid = copy.deepcopy(best_grid)
+    starts = copy.deepcopy(best_starts)
+    words = copy.deepcopy(best_words)
     clear = ["" for i in range(len(grid))]
     count = 0
     while grid[0] == clear:
@@ -244,11 +273,14 @@ def main():
         cClear = colClearEnd()
     for i in range(len(starts)):
         starts[i][0][1] -= count
-    for i in grid:
-        print(i)
-    for i in starts:
-        print(i)
-
-
-if __name__ == "__main__":
-  main()
+    res = ''
+    height = len(grid)
+    width = len(grid[0])
+    for i in range(len(grid)):
+        for j in grid[i]:
+            if j == '':
+                res += ' '
+            else:
+                res += j
+    res = res.upper()
+    return res, width, height
