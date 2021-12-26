@@ -1,283 +1,279 @@
 import copy, random
 
-grid = [[]]
+word_grid = [[]]
 words = []
-comp_grid = []
-starts = []
+character_comparison_grid = []
+word_location_info = []
 
-def find_comps():
+def find_comparisons():
     global words
-    grid = [["" for i in words] for j in words]
+    word_grid = [["" for i in words] for j in words]
     for i in range(len(words)):
         for j in range(len(words)):
-            grid[i][j] = compare_words(words[i], words[j])
-    return grid
+            word_grid[i][j] = compare_words(words[i], words[j])
+    return word_grid
 
 def compare_words(word1, word2):
-    res = ""
+    common_characters = ""
     if word1 == word2:
         return word1
     for i in range(len(word1)):
         if word1[i] in word2:
-            if word1[i] not in res:
-                res += word1[i]
-    return res
-
-def leng(word):
-    return len(word)
+            if word1[i] not in common_characters:
+                common_characters += word1[i]
+    return common_characters
 
 def create_grid():
-    global comp_grid
+    global character_comparison_grid
     global words
-    global grid
-    global starts
-    key = 0
-    vert = False
-    first = words[key]
-    grid = [["" for i in range(len(words[key]) * 4)] for j in range(len(words[key]) * 4)]
-    for i in range(int(len(grid) / 2 - len(words[key]) / 2), int(len(grid) / 2 - len(words[key]) / 2 + len(words[key]))):
-        grid[int(len(grid) / 2)][i] = words[key][i - (int(len(grid) / 2 - len(words[key]) / 2))]
-        if (i - (int(len(grid) / 2 - len(words[key]) / 2))) == 0:
-            pos = tuple([(int(len(grid) / 2)), i])
-            starts.append([list(pos), not vert, first])
-    words.pop(key)
-    place_words(first, vert, pos)
+    global word_grid
+    global word_location_info
+    is_vert = False
+    first_word = words[0]
+    word_grid = [["" for i in range(len(first_word) * 4)] for j in range(len(first_word) * 4)]
+    for i in range(int(len(word_grid) / 2 - len(first_word) / 2), int(len(word_grid) / 2 - len(first_word) / 2 + len(first_word))):
+        word_grid[int(len(word_grid) / 2)][i] = first_word[i - (int(len(word_grid) / 2 - len(first_word) / 2))]
+        if (i - (int(len(word_grid) / 2 - len(first_word) / 2))) == 0:
+            starting_position = tuple([(int(len(word_grid) / 2)), i])
+            word_location_info.append([list(starting_position), not is_vert, first_word])
+    words.pop(0)
+    place_words(first_word, is_vert, starting_position)
 
-def place_words(first, vert, pos):
-    global comp_grid
+def place_words(selected_word, is_vert, starting_position):
+    global character_comparison_grid
     global words
-    global grid
-    for i in range(len(comp_grid)):
-        if comp_grid[i][i] == first:
-            key = i
-    count = []
-    inter = 0
+    global word_grid
+    for i in range(len(character_comparison_grid)):
+        if character_comparison_grid[i][i] == selected_word:
+            selected_word_key = i
+    match_count = []
+    word_list_traversal_key = 0
     if len(words) == 0:
         return
-    while len(count) < 2 and inter < len(comp_grid):
-        if comp_grid[key][inter] != "" and comp_grid[key][inter] != comp_grid[key][key] and comp_grid[inter][inter] in words:
-            count.append(comp_grid[inter][inter])
-        inter += 1
-    if len(count) == 0:
-        return
-    elif len(count) == 1:
-        placed = False
-        test = find_int(key, count[0])
-        counter = 0
-        while counter < len(test) and placed != True:
-            (placed, pos) = test_placement(test[counter], vert, pos, count[0])
-            counter += 1
-        if placed:
-            for i in range(len(comp_grid)):
-                comp_grid[i].pop(key)
-            comp_grid.pop(key)
-            vert = not vert
-            words.remove(count[0])
-            return place_words(count[0], vert, pos)
+    while len(match_count) < 2 and word_list_traversal_key < len(character_comparison_grid):
+        if character_comparison_grid[selected_word_key][word_list_traversal_key] != "" and character_comparison_grid[selected_word_key][word_list_traversal_key] != character_comparison_grid[selected_word_key][selected_word_key] and character_comparison_grid[word_list_traversal_key][word_list_traversal_key] in words:
+            match_count.append(character_comparison_grid[word_list_traversal_key][word_list_traversal_key])
+        word_list_traversal_key += 1
+    if len(match_count) == 0:
+        return    
+    elif len(match_count) == 1:
+        is_placed = False
+        possible_intersections = find_intersections(selected_word_key, match_count[0])
+        possible_intersections_traversal_key = 0
+        while possible_intersections_traversal_key < len(possible_intersections) and is_placed != True:
+            (is_placed, starting_position) = test_placement(possible_intersections[possible_intersections_traversal_key], is_vert, starting_position, match_count[0])
+            possible_intersections_traversal_key += 1
+        if is_placed:
+            for i in range(len(character_comparison_grid)):
+                character_comparison_grid[i].pop(selected_word_key)
+            character_comparison_grid.pop(selected_word_key)
+            is_vert = not is_vert
+            words.remove(match_count[0])
+            return place_words(match_count[0], is_vert, starting_position)
         else:
             return
     else:
-        placed = [False, False]
-        pos = [pos, pos]
-        test = [find_int(key, count[0]), find_int(key, count[1])]
-        counter = 0
-        while counter < len(test) and False in placed:
+        is_placed = [False, False]
+        starting_position = [starting_position, starting_position]
+        possible_intersections = [find_intersections(selected_word_key, match_count[0]), find_intersections(selected_word_key, match_count[1])]
+        possible_intersections_traversal_key = 0
+        while possible_intersections_traversal_key < len(possible_intersections) and False in is_placed:
             idx = 0
-            while idx < len(test[counter]) and placed[counter] == False:
-                (placed[counter], pos[counter]) = test_placement(test[counter][idx], vert, pos[counter], count[counter])
+            while idx < len(possible_intersections[possible_intersections_traversal_key]) and is_placed[possible_intersections_traversal_key] == False:
+                (is_placed[possible_intersections_traversal_key], starting_position[possible_intersections_traversal_key]) = test_placement(possible_intersections[possible_intersections_traversal_key][idx], is_vert, starting_position[possible_intersections_traversal_key], match_count[possible_intersections_traversal_key])
                 idx += 1
-            counter += 1
-        if placed[0] or placed[1]:
-            for i in range(len(comp_grid)):
-                comp_grid[i].pop(key)
-            comp_grid.pop(key)
-            vert = not vert
-            if not placed[1]:
-                words.remove(count[0])
-                return place_words(count[0], vert, pos[0])
-            elif not placed[0]:
-                words.remove(count[1])
-                return place_words(count[1], vert, pos[1])
+            possible_intersections_traversal_key += 1
+        if is_placed[0] or is_placed[1]:
+            for i in range(len(character_comparison_grid)):
+                character_comparison_grid[i].pop(selected_word_key)
+            character_comparison_grid.pop(selected_word_key)
+            is_vert = not is_vert
+            if not is_placed[1]:
+                words.remove(match_count[0])
+                return place_words(match_count[0], is_vert, starting_position[0])
+            elif not is_placed[0]:
+                words.remove(match_count[1])
+                return place_words(match_count[1], is_vert, starting_position[1])
             else:
-                words.remove(count[0])
-                words.remove(count[1])
-                place_words(count[0], vert, pos[0])
-                return place_words(count[1], vert, pos[1])
+                words.remove(match_count[0])
+                words.remove(match_count[1])
+                place_words(match_count[0], is_vert, starting_position[0])
+                return place_words(match_count[1], is_vert, starting_position[1])
     return
 
-def test_placement(test, vert, pos, word):
-    global grid
-    global starts
-    if not vert:
-        for i in range(pos[0] - test[1], pos[0] - test[1] + len(word)):
-            if i < 0 or i >= len(grid):
-                return (False, pos)
-            if grid[i][pos[1] + test[0]] != '' and grid[i][pos[1] + test[0]] != word[i - (pos[0] - test[1])]:
-                return (False, pos)
-        testc = test_collision(pos, test, word, vert)
-        if not testc:
-            return (False, pos)
-        for i in range(pos[0] - test[1], pos[0] - test[1] + len(word)):
-            grid[i][pos[1] + test[0]] = word[i - (pos[0] - test[1])]
-            if i - (pos[0] - test[1]) == 0:
-                newPos = tuple([i, pos[1] + test[0]])
-                starts.append([list(newPos), vert, word])
-        return (True, newPos)
+def test_placement(intersection, is_vert, possible_intersections, word):
+    global word_grid
+    global word_location_info
+    if not is_vert:
+        for i in range(possible_intersections[0] - intersection[1], possible_intersections[0] - intersection[1] + len(word)):
+            if i < 0 or i >= len(word_grid):
+                return (False, possible_intersections)
+            if word_grid[i][possible_intersections[1] + intersection[0]] != '' and word_grid[i][possible_intersections[1] + intersection[0]] != word[i - (possible_intersections[0] - intersection[1])]:
+                return (False, possible_intersections)
+        is_no_collision = test_collision(possible_intersections, intersection, word, is_vert)
+        if not is_no_collision:
+            return (False, possible_intersections)
+        for i in range(possible_intersections[0] - intersection[1], possible_intersections[0] - intersection[1] + len(word)):    
+            word_grid[i][possible_intersections[1] + intersection[0]] = word[i - (possible_intersections[0] - intersection[1])]
+            if i - (possible_intersections[0] - intersection[1]) == 0:
+                new_position = tuple([i, possible_intersections[1] + intersection[0]])
+                word_location_info.append([list(new_position), is_vert, word])
+        return (True, new_position)
     else:
-        for i in range(pos[1] - test[1], pos[1] - test[1] + len(word)):
-            if i < 0 or i >= len(grid):
-                return (False, pos)
-            if grid[pos[0] + test[0]][i] != '' and grid[pos[0] + test[0]][i] != word[i - (pos[1] - test[1])]:
-                return (False, pos)
-        testc = test_collision(pos, test, word, vert)
-        if not testc:
-            return (False, pos)
-        for i in range(pos[1] - test[1], pos[1] - test[1] + len(word)):
-            grid[pos[0] + test[0]][i] = word[i - (pos[1] - test[1])]
-            if i - (pos[1] - test[1]) == 0:
-                newPos = tuple([pos[0] + test[0], i])
-                starts.append([list(newPos), vert, word])
-        return (True, newPos)
+        for i in range(possible_intersections[1] - intersection[1], possible_intersections[1] - intersection[1] + len(word)):
+            if i < 0 or i >= len(word_grid):
+                return (False, possible_intersections)
+            if word_grid[possible_intersections[0] + intersection[0]][i] != '' and word_grid[possible_intersections[0] + intersection[0]][i] != word[i - (possible_intersections[1] - intersection[1])]:
+                return (False, possible_intersections)
+        is_no_collision = test_collision(possible_intersections, intersection, word, is_vert)
+        if not is_no_collision:
+            return (False, possible_intersections)
+        for i in range(possible_intersections[1] - intersection[1], possible_intersections[1] - intersection[1] + len(word)):    
+            word_grid[possible_intersections[0] + intersection[0]][i] = word[i - (possible_intersections[1] - intersection[1])]
+            if i - (possible_intersections[1] - intersection[1]) == 0:
+                new_position = tuple([possible_intersections[0] + intersection[0], i])
+                word_location_info.append([list(new_position), is_vert, word])
+        return (True, new_position)
 
-def test_collision(pos, test, word, vert):
-    global grid
-    if not vert:
-        if pos[0] - test[1] > 0:
-            if grid[pos[0] - test[1] - 1][pos[1] + test[0]] != '':
+def test_collision(possible_intersections, intersection, word, is_vert):
+    global word_grid
+    if not is_vert:
+        if possible_intersections[0] - intersection[1] > 0:
+            if word_grid[possible_intersections[0] - intersection[1] - 1][possible_intersections[1] + intersection[0]] != '':
                 return False
-        if pos[0] + (len(word) - 1 - test[1]) < len(grid) - 1:
-            if grid[pos[0] + len(word) - test[1]][pos[1] + test[0]] != '':
+        if possible_intersections[0] + (len(word) - 1 - intersection[1]) < len(word_grid) - 1:
+            if word_grid[possible_intersections[0] + len(word) - intersection[1]][possible_intersections[1] + intersection[0]] != '':
                 return False
-        for i in range(pos[0] - test[1], pos[0] - test[1] + len(word)):
-            if grid[i][pos[1] + test[0]] == '':
-                if (pos[1] + test[0] > 0) and (pos[1] + test[0] < len(grid) - 1):
-                    if (grid[i][pos[1] + test[0] - 1] != '') or (grid[i][pos[1] + test[0] + 1] != ''):
+        for i in range(possible_intersections[0] - intersection[1], possible_intersections[0] - intersection[1] + len(word)):
+            if word_grid[i][possible_intersections[1] + intersection[0]] == '':
+                if (possible_intersections[1] + intersection[0] > 0) and (possible_intersections[1] + intersection[0] < len(word_grid) - 1):
+                    if (word_grid[i][possible_intersections[1] + intersection[0] - 1] != '') or (word_grid[i][possible_intersections[1] + intersection[0] + 1] != ''):
                         return False
-                elif pos[1] + test[0] > 0:
-                    if grid[i][pos[1] + test[0] - 1] != '':
+                elif possible_intersections[1] + intersection[0] > 0:
+                    if word_grid[i][possible_intersections[1] + intersection[0] - 1] != '':
                         return False
-                elif pos[1] + test[0] < len(grid) - 1:
-                    if grid[i][pos[1] + test[0] + 1] != '':
+                elif possible_intersections[1] + intersection[0] < len(word_grid) - 1:
+                    if word_grid[i][possible_intersections[1] + intersection[0] + 1] != '':
                         return False
     else:
-        if pos[1] - test[1] > 0:
-            if grid[pos[0] + test[0]][pos[1] - test[1] - 1] != '':
+        if possible_intersections[1] - intersection[1] > 0:
+            if word_grid[possible_intersections[0] + intersection[0]][possible_intersections[1] - intersection[1] - 1] != '':
                 return False
-        if pos[1] + (len(word) - 1 - test[1]) < len(grid) - 1:
-            if grid[pos[0] + test[0]][pos[1] + len(word) - test[1]] != '':
+        if possible_intersections[1] + (len(word) - 1 - intersection[1]) < len(word_grid) - 1:
+            if word_grid[possible_intersections[0] + intersection[0]][possible_intersections[1] + len(word) - intersection[1]] != '':
                 return False
-        for i in range(pos[1] - test[1], pos[1] - test[1] + len(word)):
-            if grid[pos[0] + test[0]][i] == '':
-                if (pos[0] + test[0] > 0) and (pos[0] + test[0] < len(grid) - 1):
-                    if (grid[pos[0] + test[0] - 1][i] != '') or (grid[pos[0] + test[0] + 1][i] != ''):
+        for i in range(possible_intersections[1] - intersection[1], possible_intersections[1] - intersection[1] + len(word)):
+            if word_grid[possible_intersections[0] + intersection[0]][i] == '':
+                if (possible_intersections[0] + intersection[0] > 0) and (possible_intersections[0] + intersection[0] < len(word_grid) - 1):
+                    if (word_grid[possible_intersections[0] + intersection[0] - 1][i] != '') or (word_grid[possible_intersections[0] + intersection[0] + 1][i] != ''):
                         return False
-                elif pos[0] + test[0] > 0:
-                    if grid[pos[0] + test[0] - 1][i] != '':
+                elif possible_intersections[0] + intersection[0] > 0:
+                    if word_grid[possible_intersections[0] + intersection[0] - 1][i] != '':
                         return False
-                elif pos[0] + test[0] < len(grid) - 1:
-                    if grid[pos[0] + test[0] + 1][i] != '':
+                elif possible_intersections[0] + intersection[0] < len(word_grid) - 1:
+                    if word_grid[possible_intersections[0] + intersection[0] + 1][i] != '':
                         return False
     return True
 
-def find_int(key, count):
-    global comp_grid
-    res = []
+def find_intersections(key, count):
+    global character_comparison_grid
+    intersections = []
     for j in range(len(count)):
-        for k in range(len(comp_grid[key][key])):
-            if count[j] == comp_grid[key][key][k]:
-                res.append(tuple([k,j]))
-    return res
+        for k in range(len(character_comparison_grid[key][key])):
+            if count[j] == character_comparison_grid[key][key][k]:
+                intersections.append(tuple([k,j]))
+    return intersections
 
-def colClear():
-    global grid
-    for i in range(len(grid)):
-        if grid[i][0] != '':
+def left_column_is_clear():
+    global word_grid
+    for i in range(len(word_grid)):
+        if word_grid[i][0] != '':
             return False
     return True
 
-def colClearEnd():
-    global grid
-    for i in range(len(grid)):
-        if grid[i][-1] != '':
+def right_column_is_clear():
+    global word_grid
+    for i in range(len(word_grid)):
+        if word_grid[i][-1] != '':
             return False
     return True
 
-def clearCol():
-    global grid
-    for i in range(len(grid)):
-        grid[i].pop(0)
-
-def clearColEnd():
-    global grid
-    for i in range(len(grid)):
-        grid[i].pop(-1)
+def clear_left_grid_column():
+    global word_grid
+    for i in range(len(word_grid)):
+        word_grid[i].pop(0)
+    
+def clear_right_grid_column():
+    global word_grid
+    for i in range(len(word_grid)):
+        word_grid[i].pop(-1)
 
 def do_calculation(input):
     global words
-    global comp_grid
-    global grid
-    global starts
+    global character_comparison_grid
+    global word_grid
+    global word_location_info
     words = input
     for i in range(len(words)):
         words[i] = words[i].lower()
-    ref_words = copy.deepcopy(words)
-    ref_comp_grid = copy.deepcopy(comp_grid)
-    ref_grid = copy.deepcopy(grid)
-    ref_starts = copy.deepcopy(starts)
-    best_words = copy.deepcopy(ref_words)
-    best_comp_grid = copy.deepcopy(ref_comp_grid)
-    best_grid = copy.deepcopy(ref_grid)
-    best_starts = copy.deepcopy(ref_starts)
-    min_val = len(ref_words)
+    original_words = copy.deepcopy(words)
+    original_character_comparison_grid = copy.deepcopy(character_comparison_grid)
+    original_grid = copy.deepcopy(word_grid)
+    original_word_location_info = copy.deepcopy(word_location_info)
+    best_words = copy.deepcopy(original_words)
+    best_character_comparison_grid = copy.deepcopy(original_character_comparison_grid)
+    best_grid = copy.deepcopy(original_grid)
+    best_word_location_info = copy.deepcopy(original_word_location_info)
+    num_words_remaining = len(original_words)
     words.sort()
-    words.sort(key = leng)
+    words.sort(key = len)
     words.reverse()
     for i in range(20):
-        comp_grid = find_comps()
+        character_comparison_grid = find_comparisons()
         create_grid()
-        if len(words) < min_val:
+        if len(words) < num_words_remaining:
             best_words = copy.deepcopy(words)
-            best_comp_grid = copy.deepcopy(comp_grid)
-            best_grid = copy.deepcopy(grid)
-            best_starts = copy.deepcopy(starts)
-            min_val = len(best_words)
-        if min_val == 0:
+            best_character_comparison_grid = copy.deepcopy(character_comparison_grid)
+            best_grid = copy.deepcopy(word_grid)
+            best_word_location_info = copy.deepcopy(word_location_info)
+            num_words_remaining = len(best_words)
+        if num_words_remaining == 0:
             break
-        comp_grid = copy.deepcopy(ref_comp_grid)
-        grid = copy.deepcopy(ref_grid)
-        starts = copy.deepcopy(ref_starts)
-        words = copy.deepcopy(ref_words)
+        character_comparison_grid = copy.deepcopy(original_character_comparison_grid)
+        word_grid = copy.deepcopy(original_grid)
+        word_location_info = copy.deepcopy(original_word_location_info)
+        words = copy.deepcopy(original_words)
         random.shuffle(words)
-    comp_grid = copy.deepcopy(best_comp_grid)
-    grid = copy.deepcopy(best_grid)
-    starts = copy.deepcopy(best_starts)
+    character_comparison_grid = copy.deepcopy(best_character_comparison_grid)
+    word_grid = copy.deepcopy(best_grid)
+    word_location_info = copy.deepcopy(best_word_location_info)
     words = copy.deepcopy(best_words)
-    clear = ["" for i in range(len(grid))]
+    clear = ["" for i in range(len(word_grid))]
     count = 0
-    while grid[0] == clear:
+    while word_grid[0] == clear:
         count += 1
-        grid.pop(0)
-    while grid[-1] == clear:
-        grid.pop(-1)
-    for i in range(len(starts)):
-        starts[i][0][0] -= count
+        word_grid.pop(0)
+    while word_grid[-1] == clear:
+        word_grid.pop(-1)
+    for i in range(len(word_location_info)):
+        word_location_info[i][0][0] -= count
     count = 0
-    cClear = colClear()
-    while cClear:
+    column_is_clear = left_column_is_clear()
+    while column_is_clear:
         count += 1
-        clearCol()
-        cClear = colClear()
-    cClear = colClearEnd()
-    while cClear:
-        clearColEnd()
-        cClear = colClearEnd()
-    for i in range(len(starts)):
-        starts[i][0][1] -= count
+        clear_left_grid_column()
+        column_is_clear = left_column_is_clear()
+    column_is_clear = right_column_is_clear()
+    while column_is_clear:
+        clear_right_grid_column()
+        column_is_clear = right_column_is_clear()
+    for i in range(len(word_location_info)):
+        word_location_info[i][0][1] -= count
     res = ''
-    height = len(grid)
-    width = len(grid[0])
-    for i in range(len(grid)):
-        for j in grid[i]:
+    height = len(word_grid)
+    width = len(word_grid[0])
+    for i in range(len(word_grid)):
+        for j in word_grid[i]:
             if j == '':
                 res += ' '
             else:
